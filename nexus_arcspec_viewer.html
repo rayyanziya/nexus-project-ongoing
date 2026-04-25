@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nexus — Architecture Graph</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0F172A;color:#e2e8f0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal{background:#111827;border:1px solid #1e3a5f;border-radius:16px;width:min(700px,95vw);max-height:90vh;overflow-y:auto;padding:36px;box-shadow:0 25px 80px rgba(0,0,0,.7)}
+.modal h2{font-size:22px;color:#fff;margin-bottom:6px}
+.modal .msub{color:#64748b;font-size:13px;margin-bottom:24px}
+.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.gcard{background:#0a0f1e;border:1px solid #1e293b;border-radius:10px;padding:14px}
+.gcard .gi{font-size:24px;margin-bottom:8px}
+.gcard h4{font-size:13px;color:#e2e8f0;margin-bottom:5px}
+.gcard p{font-size:12px;color:#64748b;line-height:1.55}
+.step-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #1e293b}
+.step-row:last-child{border-bottom:none}
+.step-num{width:26px;height:26px;border-radius:50%;background:#1F6FB8;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-row p{font-size:12px;color:#64748b;line-height:1.5;margin-top:2px}
+.step-row h4{font-size:13px;color:#e2e8f0}
+.modal-footer{display:flex;align-items:center;justify-content:space-between;margin-top:20px}
+.modal-footer label{font-size:12px;color:#475569;display:flex;align-items:center;gap:6px;cursor:pointer}
+.btn-primary{background:#1F6FB8;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-primary:hover{background:#1a5fa0}
+.shape-demo{display:inline-flex;align-items:center;gap:6px;margin:3px 0;font-size:11px;color:#94a3b8}
+
+header{background:#12305B;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #2FA3A3;flex-shrink:0}
+header h1{font-size:15px;font-weight:700;color:#fff;letter-spacing:.3px}
+header .sub{font-size:11px;color:#7dd3fc;font-style:italic}
+.hbtn{border:1px solid #1e3a5f;background:#0a0f1e;color:#64748b;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer}
+.hbtn:hover{color:#e2e8f0;border-color:#334155}
+.main{display:flex;flex:1;overflow:hidden}
+.sidebar{width:200px;background:#1e293b;border-right:1px solid #334155;padding:12px;overflow-y:auto;flex-shrink:0;font-size:12px}
+.sidebar h3{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin:12px 0 6px}
+.sidebar h3:first-child{margin-top:0}
+.legend-row{display:flex;align-items:center;gap:7px;margin:3px 0;font-size:11px;color:#cbd5e1}
+.swatch{width:12px;height:12px;border-radius:2px;flex-shrink:0}
+.filter-btn{display:block;width:100%;padding:4px 8px;margin:2px 0;border:1px solid #334155;border-radius:4px;background:#0f172a;color:#94a3b8;cursor:pointer;font-size:11px;text-align:left;transition:all .15s}
+.filter-btn:hover{background:#1e3a5f;color:#fff}
+.filter-btn.on{background:#1F6FB8;color:#fff;border-color:#1F6FB8}
+.guide-note{background:#0a0f1e;border:1px solid #1e293b;border-radius:6px;padding:8px;margin-top:6px;font-size:11px;color:#475569;line-height:1.6}
+.guide-note b{color:#94a3b8}
+canvas{display:block;cursor:grab}
+canvas:active{cursor:grabbing}
+.panel{width:240px;background:#1e293b;border-left:1px solid #334155;padding:12px;overflow-y:auto;flex-shrink:0;font-size:12px}
+.panel h3{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin:10px 0 4px}
+.panel h3:first-child{margin-top:0}
+.panel .val{color:#e2e8f0;font-size:12px;line-height:1.6;word-break:break-word}
+.panel .val code{font-family:Consolas,monospace;font-size:11px;color:#7dd3fc}
+.panel .empty{color:#475569;font-size:12px}
+.edge-row{color:#94a3b8;font-size:11px;line-height:1.7}
+.edge-row code{color:#7dd3fc;font-size:10px}
+kbd{background:#0f172a;border:1px solid #334155;border-radius:3px;padding:1px 5px;font-size:10px;font-family:inherit;color:#cbd5e1}
+.tip{font-size:11px;color:#64748b;line-height:1.8;margin-top:4px}
+#canvasWrap{flex:1;overflow:hidden;position:relative}
+#fps{position:absolute;bottom:6px;left:8px;font-size:10px;color:#334155;pointer-events:none}
+</style>
+</head>
+<body>
+
+<!-- ══ WELCOME MODAL ══ -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2>🗺️ Nexus — System Architecture Map</h2>
+    <p class="msub">This diagram shows how Nexus works — all its components and how they connect. You don't need to be technical to read it.</p>
+    <div class="guide-grid">
+      <div class="gcard">
+        <div class="gi">⭕</div>
+        <h4>What are the circles?</h4>
+        <p>Each circle is a <strong>component</strong> — a part of the Nexus system with a specific job. For example: "AI Intake", "Billing", "WhatsApp Sender".</p>
+      </div>
+      <div class="gcard">
+        <div class="gi">↗️</div>
+        <h4>What do the arrows mean?</h4>
+        <p>An arrow from A → B means <strong>A talks to B</strong>. For example: "AI Intake → Lead Manager" means the chatbot hands off leads to the lead system.</p>
+      </div>
+      <div class="gcard">
+        <div class="gi">🎨</div>
+        <h4>What do the colours mean?</h4>
+        <p>Each colour is a <strong>type of component</strong>: Green = business logic, Purple = AI tools, Yellow = data models, Pink = background workers, Grey = external services.</p>
+      </div>
+      <div class="gcard">
+        <div class="gi">🔍</div>
+        <h4>How do I explore it?</h4>
+        <p><strong>Click</strong> any circle to see what it does and what it connects to. Use the <strong>left panel</strong> to show only one business area at a time.</p>
+      </div>
+    </div>
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px">STEP-BY-STEP: How to read this diagram</div>
+      <div class="step-row"><div class="step-num">1</div><div><h4>Start with the AI Intake filter</h4><p>Click "AI" in the left panel. You'll see just the chatbot, the AI tools it uses, and where leads go after a conversation ends.</p></div></div>
+      <div class="step-row"><div class="step-num">2</div><div><h4>Follow the arrows</h4><p>Click any circle. The right panel shows what it connects to. Highlighted arrows show the direct relationships.</p></div></div>
+      <div class="step-row"><div class="step-num">3</div><div><h4>Zoom in to read labels</h4><p>Scroll up to zoom in. Labels on arrows explain the relationship (e.g. "calls", "emits", "queues").</p></div></div>
+      <div class="step-row"><div class="step-num">4</div><div><h4>Press R to reset the view</h4><p>If you get lost, press the R key to zoom back out and see the full picture.</p></div></div>
+    </div>
+    <div class="modal-footer">
+      <label><input type="checkbox" id="no-show"> Don't show this again</label>
+      <button class="btn-primary" onclick="closeModal()">Got it — show me the diagram</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HELP MODAL ══ -->
+<div class="modal-bg" id="help-modal" style="display:none">
+  <div class="modal">
+    <h2>❓ How to read the Architecture Graph</h2>
+    <p class="msub">Quick reference for all audiences.</p>
+    <div class="guide-grid">
+      <div class="gcard">
+        <div class="gi">⭕</div>
+        <h4>Shapes = component types</h4>
+        <div class="shape-demo">🟢 Circle = Service (business logic)</div><br>
+        <div class="shape-demo">🔵 Circle = Controller (API endpoint)</div><br>
+        <div class="shape-demo">🟡 Diamond = Data model (database table)</div><br>
+        <div class="shape-demo">🟣 Hexagon = MCP server (AI tool)</div><br>
+        <div class="shape-demo">⬜ Rectangle = External service</div><br>
+        <div class="shape-demo">🩷 Ellipse = Background worker</div>
+      </div>
+      <div class="gcard">
+        <div class="gi">↗️</div>
+        <h4>Arrow labels explained</h4>
+        <p><b style="color:#e2e8f0">handles</b> — this endpoint receives that request<br><br>
+        <b style="color:#e2e8f0">calls</b> — this component triggers that one<br><br>
+        <b style="color:#e2e8f0">emits</b> — sends an event when something happens<br><br>
+        <b style="color:#e2e8f0">queues</b> — puts a job in the background queue<br><br>
+        <b style="color:#e2e8f0">uses-mcp</b> — AI agent uses this tool safely<br><br>
+        <b style="color:#e2e8f0">writes / reads</b> — saves or reads from the database</p>
+      </div>
+      <div class="gcard">
+        <div class="gi">🏗️</div>
+        <h4>Business areas (modules)</h4>
+        <p>Use the left filter panel to isolate one area:<br><br>
+        <b style="color:#e2e8f0">Intake</b> — AI chatbot that captures leads<br>
+        <b style="color:#e2e8f0">Scheduling</b> — meeting booking system<br>
+        <b style="color:#e2e8f0">Projects</b> — client project tracking<br>
+        <b style="color:#e2e8f0">Ticketing</b> — support tickets<br>
+        <b style="color:#e2e8f0">Documents</b> — contracts & files<br>
+        <b style="color:#e2e8f0">Billing</b> — invoices & payments<br>
+        <b style="color:#e2e8f0">AI</b> — Claude + MCP tools<br>
+        <b style="color:#e2e8f0">Notifications</b> — WhatsApp / email</p>
+      </div>
+      <div class="gcard">
+        <div class="gi">🖱️</div>
+        <h4>Controls</h4>
+        <p><b style="color:#e2e8f0">Click</b> a node — see details<br>
+        <b style="color:#e2e8f0">Scroll</b> — zoom in/out<br>
+        <b style="color:#e2e8f0">Drag background</b> — pan<br>
+        <b style="color:#e2e8f0">Drag node</b> — move it<br>
+        <b style="color:#e2e8f0">R key</b> — reset view<br>
+        <b style="color:#e2e8f0">P key</b> — pause/resume animation</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span></span>
+      <button class="btn-primary" onclick="document.getElementById('help-modal').style.display='none'">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function closeModal(){
+  if(document.getElementById("no-show").checked)localStorage.setItem("nexus-arch-seen","1");
+  document.getElementById("modal").style.display="none";
+}
+if(localStorage.getItem("nexus-arch-seen"))document.getElementById("modal").style.display="none";
+</script>
+
+<header>
+  <div>
+    <h1>NEXUS — Architecture Graph</h1>
+    <div class="sub">System component map · PT Global Dataverse Indonesia · v1.0</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="hbtn" onclick="document.getElementById('help-modal').style.display='flex'">❓ How to read this</button>
+    <span style="font-size:11px;color:#334155"><kbd>R</kbd> reset &nbsp;<kbd>P</kbd> pause &nbsp;<kbd>scroll</kbd> zoom</span>
+  </div>
+</header>
+<div class="main">
+  <div class="sidebar">
+    <h3>What do the shapes mean?</h3>
+    <div class="legend-row"><span class="swatch" style="background:#818cf8;border-radius:2px"></span><span><b style="color:#cbd5e1">Controller</b> — API endpoint</span></div>
+    <div class="legend-row"><span class="swatch" style="background:#34d399;border-radius:50%"></span><span><b style="color:#cbd5e1">Service</b> — Business logic</span></div>
+    <div class="legend-row"><span class="swatch" style="background:#fbbf24;transform:rotate(45deg)"></span><span><b style="color:#cbd5e1">Model</b> — Database table</span></div>
+    <div class="legend-row"><span class="swatch" style="background:#f472b6;border-radius:50%"></span><span><b style="color:#cbd5e1">Worker</b> — Background job</span></div>
+    <div class="legend-row"><span class="swatch" style="background:#a78bfa;clip-path:polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0% 50%)"></span><span><b style="color:#cbd5e1">MCP Server</b> — AI tool</span></div>
+    <div class="legend-row"><span class="swatch" style="background:#64748b;border-radius:2px"></span><span><b style="color:#cbd5e1">Integration</b> — External service</span></div>
+
+    <h3>What do arrows mean?</h3>
+    <div class="guide-note">
+      An arrow <b>A → B</b> means<br>
+      <b>"A communicates with B"</b><br><br>
+      Click a node to see its arrows highlighted and labelled.
+    </div>
+
+    <h3>Filter by area</h3>
+    <div id="filters"></div>
+
+    <h3>Controls</h3>
+    <div class="tip">
+      <kbd>scroll</kbd> zoom in/out<br>
+      <kbd>drag canvas</kbd> move around<br>
+      <kbd>drag node</kbd> reposition<br>
+      <kbd>click</kbd> inspect a component<br>
+      <kbd>R</kbd> reset view<br>
+      <kbd>P</kbd> pause/resume animation
+    </div>
+  </div>
+
+  <div id="canvasWrap">
+    <canvas id="c"></canvas>
+    <div id="fps"></div>
+  </div>
+
+  <div class="panel">
+    <div id="info"><div style="color:#334155;font-size:12px;text-align:center;padding:20px 0">👆<br><br>Click any component to see what it does and what it connects to.</div></div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────── DATA ───────────────────────
+const TYPE_COLOR = {
+  controller:  "#818cf8",
+  service:     "#34d399",
+  model:       "#fbbf24",
+  worker:      "#f472b6",
+  mcp:         "#a78bfa",
+  integration: "#64748b",
+};
+
+const RAW_NODES = [
+  // Intake
+  ["ctl.intake.conversation","intake.conversation","controller","Intake","POST /api/intake/messages — AI chat entry point"],
+  ["svc.intake.orchestrator","intake.orchestrator","service","Intake","Calls AI orchestrator + writes Lead"],
+  ["svc.intake.classifier","intake.classifier","service","Intake","Maps AI output to service categories"],
+  ["model.lead","lead","model","Intake","Lead aggregate root (pre-qualification)"],
+  // Scheduling
+  ["ctl.scheduling.bookings","scheduling.bookings","controller","Scheduling","POST /api/bookings"],
+  ["svc.scheduling.availability","scheduling.availability","service","Scheduling","Merges staff + calendar slots"],
+  ["svc.scheduling.sync","scheduling.sync","service","Scheduling","Google/Outlook bi-directional sync"],
+  ["worker.scheduling.reminders","scheduling.reminders","worker","Scheduling","T-24h, T-1h meeting reminders"],
+  // Projects
+  ["ctl.projects.board","projects.board","controller","Projects","GET/PATCH /api/projects/:id"],
+  ["svc.projects.state","projects.state","service","Projects","State machine: Pre-Dev → Maintenance"],
+  ["model.project","project","model","Projects","Aggregate root — owns milestones, tasks, deliverables"],
+  // Ticketing
+  ["ctl.tickets.requests","tickets.requests","controller","Ticketing","CRUD + state transitions"],
+  ["svc.tickets.sla","tickets.sla","service","Ticketing","Priority → response-target engine"],
+  ["worker.tickets.escalation","tickets.escalation","worker","Ticketing","SLA breach escalation"],
+  ["model.request","request","model","Ticketing","Support ticket aggregate"],
+  // Documents
+  ["ctl.docs.contracts","docs.contracts","controller","Documents","POST /api/contracts"],
+  ["svc.docs.templating","docs.templating","service","Documents","Handlebars contract renderer"],
+  ["svc.docs.signature","docs.signature","service","Documents","DocuSign adapter + webhook handler"],
+  ["model.document","document","model","Documents","Contract / deliverable"],
+  // Billing
+  ["ctl.billing.invoices","billing.invoices","controller","Billing","CRUD invoices"],
+  ["svc.billing.subscriptions","billing.subscriptions","service","Billing","Recurring billing engine"],
+  ["svc.billing.payments","billing.payments","service","Billing","Stripe + Midtrans adapters"],
+  ["model.invoice","invoice","model","Billing","Invoice aggregate"],
+  // Notifications
+  ["svc.notify.dispatch","notify.dispatch","service","Notifications","Channel router + retry queue"],
+  ["worker.notify.whatsapp","notify.whatsapp","worker","Notifications","WhatsApp Business API sender"],
+  ["worker.notify.email","notify.email","worker","Notifications","SendGrid email sender"],
+  // AI
+  ["svc.ai.orchestrator","ai.orchestrator","service","AI","Claude chat loop + MCP client"],
+  ["mcp.nexus-crm","nexus-crm","mcp","AI","Lead/Client/Project tools for AI agents"],
+  ["mcp.nexus-scheduling","nexus-scheduling","mcp","AI","Availability + booking tools"],
+  ["mcp.nexus-docs","nexus-docs","mcp","AI","Draft contracts, signature status"],
+  ["mcp.nexus-billing","nexus-billing","mcp","AI","Invoices + subscriptions"],
+  ["mcp.nexus-knowledge","nexus-knowledge","mcp","AI","Service catalog, pricing, case studies (read-only)"],
+  // IAM
+  ["svc.iam.auth","iam.auth","service","IAM","AuthN/Z, sessions, RBAC enforcement"],
+  ["model.user","user","model","IAM","User + role assignments"],
+  // Integrations
+  ["int.calendar.google","calendar.google","integration","Integrations","Google Calendar OAuth + API"],
+  ["int.calendar.outlook","calendar.outlook","integration","Integrations","Microsoft Graph Calendar"],
+  ["int.payments.stripe","payments.stripe","integration","Integrations","International card payments"],
+  ["int.payments.midtrans","payments.midtrans","integration","Integrations","IDR / VA / QRIS domestic"],
+  ["int.esign.docusign","esign.docusign","integration","Integrations","Envelope + webhook (e-sign)"],
+  ["int.wa.meta","wa.meta","integration","Integrations","WhatsApp Business API (Cloud)"],
+  ["int.email.sendgrid","email.sendgrid","integration","Integrations","SMTP email fallback"],
+  ["int.llm.anthropic","llm.anthropic","integration","Integrations","Anthropic Claude API"],
+  ["int.storage.s3","storage.s3","integration","Integrations","S3 — documents, deliverables"],
+];
+
+const RAW_EDGES = [
+  // Intake
+  ["ctl.intake.conversation","svc.intake.orchestrator","handles"],
+  ["svc.intake.orchestrator","svc.ai.orchestrator","calls"],
+  ["svc.intake.orchestrator","svc.intake.classifier","calls"],
+  ["svc.intake.orchestrator","model.lead","writes"],
+  ["svc.intake.orchestrator","svc.notify.dispatch","emits"],
+  // AI → MCP
+  ["svc.ai.orchestrator","mcp.nexus-crm","uses-mcp"],
+  ["svc.ai.orchestrator","mcp.nexus-scheduling","uses-mcp"],
+  ["svc.ai.orchestrator","mcp.nexus-docs","uses-mcp"],
+  ["svc.ai.orchestrator","mcp.nexus-billing","uses-mcp"],
+  ["svc.ai.orchestrator","mcp.nexus-knowledge","uses-mcp"],
+  ["svc.ai.orchestrator","int.llm.anthropic","calls"],
+  // MCP → services
+  ["mcp.nexus-crm","model.lead","reads"],
+  ["mcp.nexus-scheduling","svc.scheduling.availability","calls"],
+  ["mcp.nexus-docs","svc.docs.signature","calls"],
+  ["mcp.nexus-billing","svc.billing.subscriptions","calls"],
+  // Scheduling
+  ["ctl.scheduling.bookings","svc.scheduling.availability","handles"],
+  ["svc.scheduling.availability","svc.scheduling.sync","depends"],
+  ["svc.scheduling.sync","int.calendar.google","calls"],
+  ["svc.scheduling.sync","int.calendar.outlook","calls"],
+  ["worker.scheduling.reminders","svc.notify.dispatch","emits"],
+  ["ctl.scheduling.bookings","svc.notify.dispatch","emits"],
+  // Projects
+  ["ctl.projects.board","svc.projects.state","handles"],
+  ["svc.projects.state","model.project","writes"],
+  ["svc.projects.state","svc.notify.dispatch","emits"],
+  // Ticketing
+  ["ctl.tickets.requests","svc.tickets.sla","handles"],
+  ["svc.tickets.sla","model.request","writes"],
+  ["worker.tickets.escalation","svc.tickets.sla","depends"],
+  ["worker.tickets.escalation","svc.notify.dispatch","emits"],
+  ["ctl.tickets.requests","svc.notify.dispatch","emits"],
+  // Documents
+  ["ctl.docs.contracts","svc.docs.templating","handles"],
+  ["svc.docs.templating","model.document","writes"],
+  ["svc.docs.signature","int.esign.docusign","calls"],
+  ["svc.docs.signature","model.document","writes"],
+  ["svc.docs.signature","svc.notify.dispatch","emits"],
+  ["model.document","int.storage.s3","stores"],
+  // Billing
+  ["ctl.billing.invoices","svc.billing.payments","handles"],
+  ["svc.billing.payments","int.payments.stripe","calls"],
+  ["svc.billing.payments","int.payments.midtrans","calls"],
+  ["svc.billing.subscriptions","model.invoice","writes"],
+  ["svc.billing.payments","svc.notify.dispatch","emits"],
+  // Notifications
+  ["svc.notify.dispatch","worker.notify.whatsapp","queues"],
+  ["svc.notify.dispatch","worker.notify.email","queues"],
+  ["worker.notify.whatsapp","int.wa.meta","calls"],
+  ["worker.notify.email","int.email.sendgrid","calls"],
+  // IAM
+  ["ctl.intake.conversation","svc.iam.auth","guards"],
+  ["ctl.projects.board","svc.iam.auth","guards"],
+  ["ctl.tickets.requests","svc.iam.auth","guards"],
+  ["ctl.billing.invoices","svc.iam.auth","guards"],
+  ["svc.iam.auth","model.user","reads"],
+  // Data relationships
+  ["model.project","model.document","has-many"],
+  ["model.project","model.invoice","has-many"],
+  ["model.project","model.request","has-many"],
+];
+
+// ─────────────────────── BUILD ───────────────────────
+const modules = [...new Set(RAW_NODES.map(n => n[3]))];
+const nodeMap = {};
+const nodes = RAW_NODES.map(([id, label, type, module, note], i) => {
+  const n = { id, label, type, module, note,
+    x: Math.random() * 1200 - 600,
+    y: Math.random() * 800 - 400,
+    vx: 0, vy: 0, pinned: false };
+  nodeMap[id] = n;
+  return n;
+});
+// Cluster by module initially
+const modCenters = {};
+modules.forEach((m, i) => {
+  const a = (i / modules.length) * Math.PI * 2;
+  modCenters[m] = { cx: Math.cos(a) * 350, cy: Math.sin(a) * 280 };
+});
+nodes.forEach(n => {
+  const c = modCenters[n.module];
+  n.x = c.cx + (Math.random() - 0.5) * 100;
+  n.y = c.cy + (Math.random() - 0.5) * 80;
+});
+const edges = RAW_EDGES.map(([from, to, rel]) => ({ from, to, rel }));
+
+// ─────────────────────── CANVAS ───────────────────────
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const wrap = document.getElementById("canvasWrap");
+
+let W, H;
+function resize() {
+  W = wrap.clientWidth; H = wrap.clientHeight;
+  canvas.width = W; canvas.height = H;
+}
+resize();
+window.addEventListener("resize", resize);
+
+// viewport
+let vpX = 0, vpY = 0, scale = 0.85;
+function toWorld(sx, sy) { return [(sx - W/2 - vpX) / scale, (sy - H/2 - vpY) / scale]; }
+function toScreen(wx, wy) { return [wx * scale + W/2 + vpX, wy * scale + H/2 + vpY]; }
+
+// ─────────────────────── PHYSICS ───────────────────────
+let physicsOn = true;
+let activeFilter = null;
+function visibleNodes() { return activeFilter ? nodes.filter(n => n.module === activeFilter) : nodes; }
+function visibleEdges() {
+  if (!activeFilter) return edges;
+  const ids = new Set(visibleNodes().map(n => n.id));
+  return edges.filter(e => ids.has(e.from) && ids.has(e.to));
+}
+
+function tick() {
+  if (!physicsOn) return;
+  const vis = visibleNodes();
+  const ve = visibleEdges();
+  const REP = 3800, SPRING_LEN = 110, SPRING_K = 0.06, DAMP = 0.82, CENTER_K = 0.008;
+  // repulsion
+  for (let i = 0; i < vis.length; i++) {
+    for (let j = i+1; j < vis.length; j++) {
+      const a = vis[i], b = vis[j];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      const f = REP / (dist * dist);
+      const fx = dx/dist * f, fy = dy/dist * f;
+      if (!a.pinned) { a.vx -= fx; a.vy -= fy; }
+      if (!b.pinned) { b.vx += fx; b.vy += fy; }
+    }
+  }
+  // spring attraction
+  ve.forEach(e => {
+    const a = nodeMap[e.from], b = nodeMap[e.to];
+    if (!a || !b) return;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    const f = (dist - SPRING_LEN) * SPRING_K;
+    const fx = dx/dist * f, fy = dy/dist * f;
+    if (!a.pinned) { a.vx += fx; a.vy += fy; }
+    if (!b.pinned) { b.vx -= fx; b.vy -= fy; }
+  });
+  // center gravity
+  vis.forEach(n => {
+    if (!n.pinned) { n.vx -= n.x * CENTER_K; n.vy -= n.y * CENTER_K; }
+  });
+  // integrate
+  vis.forEach(n => {
+    if (n.pinned) return;
+    n.vx *= DAMP; n.vy *= DAMP;
+    n.x += n.vx; n.y += n.vy;
+  });
+}
+
+// ─────────────────────── DRAW ───────────────────────
+let selectedNode = null;
+let hoveredNode = null;
+let lastT = 0; let fpsVal = 0; let frames = 0;
+
+function nodeRadius(n) { return n.type === "mcp" ? 18 : n.type === "model" ? 14 : 15; }
+
+function drawArrow(x1, y1, x2, y2, r) {
+  const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy)||1;
+  const ux = dx/len, uy = dy/len;
+  const ex = x2 - ux*r, ey = y2 - uy*r;
+  // arrow head
+  const ax = 7, ay = 4;
+  ctx.save();
+  ctx.translate(ex, ey);
+  ctx.rotate(Math.atan2(dy, dx));
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.lineTo(-ax,-ay);
+  ctx.lineTo(-ax, ay);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+  return { ex, ey, sx: x1 + ux*r, sy: y1 + uy*r };
+}
+
+function draw(ts) {
+  frames++;
+  if (ts - lastT > 500) { fpsVal = Math.round(frames*1000/(ts-lastT)||0); frames = 0; lastT = ts; }
+  document.getElementById("fps").textContent = physicsOn ? `physics on · ${fpsVal}fps` : "physics paused";
+
+  ctx.clearRect(0, 0, W, H);
+
+  // background grid (subtle)
+  ctx.save();
+  ctx.strokeStyle = "#1e293b";
+  ctx.lineWidth = 1;
+  const gs = 60 * scale;
+  const ox = (vpX + W/2) % gs, oy = (vpY + H/2) % gs;
+  for (let x = ox; x < W; x += gs) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = oy; y < H; y += gs) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  ctx.restore();
+
+  const vis = visibleNodes();
+  const ve = visibleEdges();
+  const visSet = new Set(vis.map(n => n.id));
+  const selNeighbours = new Set();
+  if (selectedNode) {
+    ve.forEach(e => {
+      if (e.from === selectedNode.id) selNeighbours.add(e.to);
+      if (e.to === selectedNode.id) selNeighbours.add(e.from);
+    });
+  }
+
+  // edges
+  ve.forEach(e => {
+    const a = nodeMap[e.from], b = nodeMap[e.to];
+    if (!a || !b) return;
+    const [ax, ay] = toScreen(a.x, a.y);
+    const [bx, by] = toScreen(b.x, b.y);
+    const isHighlit = selectedNode && (e.from === selectedNode.id || e.to === selectedNode.id);
+    const alpha = selectedNode ? (isHighlit ? 1 : 0.1) : 0.35;
+    const col = isHighlit ? "#2FA3A3" : "#475569";
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = col;
+    ctx.fillStyle = col;
+    ctx.lineWidth = isHighlit ? 1.8 : 1;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    const ra = nodeRadius(a) * scale, rb = nodeRadius(b) * scale;
+    const { sx, sy, ex, ey } = drawArrow(ax, ay, bx, by, rb + 4);
+    // label on highlighted edges
+    if (isHighlit && e.rel) {
+      const mx = (ax+bx)/2, my = (ay+by)/2;
+      ctx.font = `${Math.max(9, 10*scale)}px Consolas,monospace`;
+      ctx.fillStyle = "#7dd3fc";
+      ctx.globalAlpha = 0.9;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(e.rel, mx, my - 8);
+    }
+    ctx.restore();
+  });
+
+  // nodes
+  vis.forEach(n => {
+    const [sx, sy] = toScreen(n.x, n.y);
+    const r = nodeRadius(n) * scale;
+    const isSelected = selectedNode && n.id === selectedNode.id;
+    const isHovered = hoveredNode && n.id === hoveredNode.id;
+    const isNeighbour = selNeighbours.has(n.id);
+    const dimmed = selectedNode && !isSelected && !isNeighbour;
+    ctx.save();
+    ctx.globalAlpha = dimmed ? 0.2 : 1;
+
+    // glow for selected/neighbour
+    if (isSelected) {
+      ctx.shadowColor = TYPE_COLOR[n.type];
+      ctx.shadowBlur = 18;
+    } else if (isNeighbour) {
+      ctx.shadowColor = "#2FA3A3";
+      ctx.shadowBlur = 10;
+    }
+
+    // node shape
+    ctx.beginPath();
+    if (n.type === "mcp") {
+      // hexagon
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI/3)*i - Math.PI/6;
+        i === 0 ? ctx.moveTo(sx+r*Math.cos(a), sy+r*Math.sin(a)) : ctx.lineTo(sx+r*Math.cos(a), sy+r*Math.sin(a));
+      }
+      ctx.closePath();
+    } else if (n.type === "model") {
+      // diamond
+      ctx.moveTo(sx, sy-r); ctx.lineTo(sx+r*0.9, sy); ctx.lineTo(sx, sy+r); ctx.lineTo(sx-r*0.9, sy);
+      ctx.closePath();
+    } else if (n.type === "integration") {
+      // rounded rect
+      const rr = r * 0.3;
+      ctx.roundRect(sx-r*1.1, sy-r*0.7, r*2.2, r*1.4, rr);
+    } else {
+      ctx.arc(sx, sy, r, 0, Math.PI*2);
+    }
+
+    ctx.fillStyle = isSelected || isHovered ? "#fff" : "#1e293b";
+    ctx.fill();
+    ctx.strokeStyle = TYPE_COLOR[n.type];
+    ctx.lineWidth = isSelected ? 3 : isNeighbour ? 2 : 1.5;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // inner dot
+    if (!isSelected && !isHovered) {
+      ctx.beginPath(); ctx.arc(sx, sy, r*0.4, 0, Math.PI*2);
+      ctx.fillStyle = TYPE_COLOR[n.type];
+      ctx.globalAlpha = dimmed ? 0.2 : 0.85;
+      ctx.fill();
+    }
+
+    // label
+    const fs = Math.max(8, Math.min(12, 10 * scale));
+    ctx.font = `${fs}px Consolas,monospace`;
+    ctx.fillStyle = isSelected ? "#12305B" : isNeighbour ? "#e2e8f0" : dimmed ? "#334155" : "#94a3b8";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.globalAlpha = dimmed ? 0.3 : 1;
+    const lbl = n.label.length > 18 ? n.label.slice(0, 17)+"…" : n.label;
+    ctx.fillText(lbl, sx, sy + r + 4);
+    ctx.restore();
+  });
+
+  tick();
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+// ─────────────────────── INTERACTION ───────────────────────
+let dragging = null, dragOffX = 0, dragOffY = 0;
+let panning = false, panStartX = 0, panStartY = 0, panVpX = 0, panVpY = 0;
+
+// Always convert from viewport coords → canvas-local coords first
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return [e.clientX - rect.left, e.clientY - rect.top];
+}
+
+function findNode(cx, cy) {
+  const [wx, wy] = toWorld(cx, cy);
+  let best = null, bestD = Infinity;
+  visibleNodes().forEach(n => {
+    const d = Math.hypot(n.x - wx, n.y - wy);
+    if (d < nodeRadius(n) + 6 && d < bestD) { bestD = d; best = n; }
+  });
+  return best;
+}
+
+canvas.addEventListener("mousedown", e => {
+  const [cx, cy] = getPos(e);
+  // Always record start position so the click handler can detect drag vs click
+  panStartX = cx; panStartY = cy;
+  const n = findNode(cx, cy);
+  if (n) {
+    dragging = n; n.pinned = true;
+    const [wx, wy] = toWorld(cx, cy);
+    dragOffX = n.x - wx; dragOffY = n.y - wy;
+  } else {
+    panning = true;
+    panVpX = vpX; panVpY = vpY;
+  }
+});
+
+canvas.addEventListener("mousemove", e => {
+  const [cx, cy] = getPos(e);
+  if (dragging) {
+    const [wx, wy] = toWorld(cx, cy);
+    dragging.x = wx + dragOffX; dragging.y = wy + dragOffY;
+    dragging.vx = 0; dragging.vy = 0;
+  } else if (panning) {
+    vpX = panVpX + (cx - panStartX);
+    vpY = panVpY + (cy - panStartY);
+  } else {
+    hoveredNode = findNode(cx, cy);
+    canvas.style.cursor = hoveredNode ? "pointer" : "grab";
+  }
+});
+
+canvas.addEventListener("mouseup", () => {
+  if (dragging) dragging.pinned = false;
+  dragging = null; panning = false;
+});
+
+canvas.addEventListener("click", e => {
+  const [cx, cy] = getPos(e);
+  if (Math.abs(cx - panStartX) > 4 || Math.abs(cy - panStartY) > 4) return;
+  const n = findNode(cx, cy);
+  selectedNode = (n && n.id !== selectedNode?.id) ? n : null;
+  showDetail(selectedNode);
+});
+
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  const f = e.deltaY < 0 ? 1.1 : 0.91;
+  scale = Math.max(0.2, Math.min(3, scale * f));
+}, { passive: false });
+
+document.addEventListener("keydown", e => {
+  if (e.key.toLowerCase() === "r") { vpX = 0; vpY = 0; scale = 0.85; }
+  if (e.key.toLowerCase() === "p") { physicsOn = !physicsOn; }
+});
+
+// ─────────────────────── FILTERS ───────────────────────
+const filtersEl = document.getElementById("filters");
+const allBtn = document.createElement("button");
+allBtn.className = "filter-btn on"; allBtn.textContent = "All";
+allBtn.onclick = () => { activeFilter = null; selectedNode = null; showDetail(null); setActiveBtn(allBtn); };
+filtersEl.appendChild(allBtn);
+const modBtns = {};
+modules.forEach(m => {
+  const b = document.createElement("button");
+  b.className = "filter-btn"; b.textContent = m; modBtns[m] = b;
+  b.onclick = () => { activeFilter = m; selectedNode = null; showDetail(null); setActiveBtn(b); };
+  filtersEl.appendChild(b);
+});
+function setActiveBtn(btn) {
+  allBtn.classList.remove("on");
+  Object.values(modBtns).forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+}
+
+// ─────────────────────── DETAIL PANEL ───────────────────────
+function showDetail(n) {
+  const el = document.getElementById("info");
+  if (!n) { el.innerHTML = `<span class="empty">Click any node to inspect it.</span>`; return; }
+  const outE = visibleEdges().filter(e => e.from === n.id);
+  const inE  = visibleEdges().filter(e => e.to   === n.id);
+  const badge = `<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;background:${TYPE_COLOR[n.type]}20;color:${TYPE_COLOR[n.type]};border:1px solid ${TYPE_COLOR[n.type]}60">${n.type}</span>`;
+  el.innerHTML = `
+    <div class="val" style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:4px">${n.label}</div>
+    ${badge}
+    <h3>Module</h3><div class="val">${n.module}</div>
+    <h3>Notes</h3><div class="val">${n.note}</div>
+    <h3>Outgoing edges (${outE.length})</h3>
+    <div class="edge-row">${outE.map(e=>`→ <code>${e.to.split(".").pop()}</code> <span style="color:#475569">[${e.rel}]</span>`).join("<br>") || '<span style="color:#475569">none</span>'}</div>
+    <h3>Incoming edges (${inE.length})</h3>
+    <div class="edge-row">${inE.map(e=>`<code>${e.from.split(".").pop()}</code> → <span style="color:#475569">[${e.rel}]</span>`).join("<br>") || '<span style="color:#475569">none</span>'}</div>
+    <h3>Full ID</h3><div class="val" style="font-family:Consolas,monospace;font-size:10px;color:#475569">${n.id}</div>
+  `;
+}
+</script>
+</body>
+</html>
