@@ -153,8 +153,8 @@ canvas:active{cursor:grabbing}
   </div>
   <div class="htoolbar">
     <div class="toggle-wrap">
-      <button class="tgl on" id="tgl-b" onclick="setMode('business')">🧑‍💼 Business View</button>
-      <button class="tgl" id="tgl-t" onclick="setMode('technical')">⚙️ Technical View</button>
+      <button class="tgl on" id="tgl-b" onclick="setMode('business')">Business View</button>
+      <button class="tgl" id="tgl-t" onclick="setMode('technical')">Technical View</button>
     </div>
     <button class="help-btn" onclick="document.getElementById('help-modal').style.display='flex'">❓ Help</button>
     <span style="font-size:11px;color:#334155"><kbd>R</kbd> reset &nbsp;<kbd>scroll</kbd> zoom</span>
@@ -193,11 +193,11 @@ function updateGuide() {
   const el = document.getElementById("guide-content");
   if (viewMode === "business") {
     el.innerHTML = `
-      <div class="guide-item"><span class="gi-icon">🗂️</span><span>Each <strong style="color:#e2e8f0">box</strong> is a type of data Nexus stores</span></div>
-      <div class="guide-item"><span class="gi-icon">↗️</span><span><strong style="color:#e2e8f0">Lines</strong> show how data connects together</span></div>
-      <div class="guide-item"><span class="gi-icon">🖱️</span><span><strong style="color:#e2e8f0">Click</strong> a box to see what it stores</span></div>
-      <div class="guide-item"><span class="gi-icon">🔍</span><span><strong style="color:#e2e8f0">Scroll</strong> to zoom in/out</span></div>
-      <div class="guide-item"><span class="gi-icon">✋</span><span><strong style="color:#e2e8f0">Drag</strong> to move around</span></div>
+      <div class="guide-item"><span class="gi-icon"></span><span>Each <strong style="color:#e2e8f0">box</strong> is a type of data Nexus stores</span></div>
+      <div class="guide-item"><span class="gi-icon"></span><span><strong style="color:#e2e8f0">Lines</strong> show how data connects together</span></div>
+      <div class="guide-item"><span class="gi-icon"></span><span><strong style="color:#e2e8f0">Click</strong> a box to see what it stores</span></div>
+      <div class="guide-item"><span class="gi-icon"></span><span><strong style="color:#e2e8f0">Scroll</strong> to zoom in/out</span></div>
+      <div class="guide-item"><span class="gi-icon"></span><span><strong style="color:#e2e8f0">Drag</strong> to move around</span></div>
     `;
   } else {
     el.innerHTML = `
@@ -224,15 +224,15 @@ if (localStorage.getItem("nexus-erd-seen")) document.getElementById("modal").sty
 //  MODULE DEFINITIONS
 // ═══════════════════════════════════════════════
 const MOD = {
-  auth:    { color:"#818cf8", label:"Identity & Access",       emoji:"🔐", desc:"Who can log in and what they can do" },
-  ai:      { color:"#34d399", label:"AI Assistant",            emoji:"🤖", desc:"The smart intake chatbot and its conversations" },
-  leads:   { color:"#fb923c", label:"Lead Pipeline",           emoji:"📥", desc:"Potential clients before they're signed up" },
-  clients: { color:"#60a5fa", label:"Clients & Projects",      emoji:"📁", desc:"Active client accounts and their work" },
-  tickets: { color:"#f472b6", label:"Support & Requests",      emoji:"🎫", desc:"Client support tickets and change requests" },
-  docs:    { color:"#a78bfa", label:"Documents & Contracts",   emoji:"📄", desc:"Files, contracts and e-signature records" },
-  billing: { color:"#fbbf24", label:"Billing & Payments",      emoji:"💳", desc:"Invoices, subscriptions and payment records" },
-  notify:  { color:"#2dd4bf", label:"Notifications",           emoji:"🔔", desc:"WhatsApp and email alerts sent to clients" },
-  monitor: { color:"#94a3b8", label:"System Monitoring",       emoji:"📡", desc:"Health checks for client servers (Phase 3)" },
+  auth:    { color:"#818cf8", label:"Identity & Access",       emoji:"", desc:"Who can log in and what they can do" },
+  ai:      { color:"#34d399", label:"AI Assistant",            emoji:"", desc:"The smart intake chatbot and its conversations" },
+  leads:   { color:"#fb923c", label:"Lead Pipeline",           emoji:"", desc:"Potential clients before they're signed up" },
+  clients: { color:"#60a5fa", label:"Clients & Projects",      emoji:"", desc:"Active client accounts and their work" },
+  tickets: { color:"#f472b6", label:"Support & Requests",      emoji:"", desc:"Client support tickets and change requests" },
+  docs:    { color:"#a78bfa", label:"Documents & Contracts",   emoji:"", desc:"Files, contracts and e-signature records" },
+  billing: { color:"#fbbf24", label:"Billing & Payments",      emoji:"", desc:"Invoices, subscriptions and payment records" },
+  notify:  { color:"#2dd4bf", label:"Notifications",           emoji:"", desc:"WhatsApp and email alerts sent to clients" },
+  monitor: { color:"#94a3b8", label:"System Monitoring",       emoji:"", desc:"Health checks for client servers (Phase 3)" },
 };
 
 // ═══════════════════════════════════════════════
