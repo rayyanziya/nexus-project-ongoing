@@ -24,7 +24,10 @@ export function PostCard({
   const isAdmin = viewer.kind === "admin";
 
   return (
-    <article className="rounded-lg border border-border bg-surface">
+    <article
+      id={`post-${post.id}`}
+      className="scroll-mt-20 rounded-lg border border-border bg-surface target:ring-2 target:ring-brand"
+    >
       <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
         <div>
           <p className="text-sm font-medium text-foreground">{ADMIN_LABEL}</p>

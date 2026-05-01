@@ -4,6 +4,7 @@ import { logAdminAction } from "@/lib/audit";
 import { buildProjectFileKey, putFile } from "@/lib/storage";
 import { getProjectById } from "@/lib/queries/projects";
 import { createPost } from "@/lib/queries/feed";
+import { createNotificationsForProjectClients } from "@/lib/queries/notifications";
 import { setProjectFileAnthropicId } from "@/lib/queries/knowledge";
 import {
   isCodeExecutable,
@@ -127,6 +128,23 @@ export async function POST(
       clientVisible,
     },
   });
+
+  if (clientVisible) {
+    try {
+      await createNotificationsForProjectClients({
+        kind: "post_created",
+        projectId,
+        postId: created.id,
+        commentId: null,
+        actor: { kind: "admin", clerkUserId },
+      });
+    } catch (err) {
+      console.error("[posts] notification fan-out failed", {
+        postId: created.id,
+        err,
+      });
+    }
+  }
 
   return NextResponse.json({ post: created }, { status: 201 });
 }

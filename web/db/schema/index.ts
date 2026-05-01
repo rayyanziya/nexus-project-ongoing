@@ -7,3 +7,6 @@ export * from "./chat";
 export * from "./billing";
 export * from "./audit";
 export * from "./sequences";
+export * from "./notifications";
+export * from "./tasks";
+export * from "./documents";

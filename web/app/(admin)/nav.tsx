@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 const ITEMS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/admin/clients", label: "Clients" },
   { href: "/admin/projects", label: "Projects" },
+  { href: "/admin/tasks", label: "Tasks" },
+  { href: "/admin/documents", label: "Documents" },
   { href: "/admin/invoices", label: "Invoices" },
   { href: "/admin/bank-accounts", label: "Bank accounts" },
 ];

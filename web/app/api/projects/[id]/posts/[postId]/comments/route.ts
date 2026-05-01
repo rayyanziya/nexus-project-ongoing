@@ -16,6 +16,10 @@ import {
   listCommentsForPost,
   type PostComment,
 } from "@/lib/queries/feed";
+import {
+  createNotificationsForAdmins,
+  createNotificationsForProjectClients,
+} from "@/lib/queries/notifications";
 
 const ADMIN_DISPLAY_NAME = "GDI";
 
@@ -134,6 +138,22 @@ export async function POST(
       targetId: created.id,
       metadata: { projectId, postId, parentCommentId },
     });
+    if (post.clientVisible) {
+      try {
+        await createNotificationsForProjectClients({
+          kind: "comment_created",
+          projectId,
+          postId,
+          commentId: created.id,
+          actor: { kind: "admin", clerkUserId: userId },
+        });
+      } catch (err) {
+        console.error("[comments] notification fan-out failed", {
+          commentId: created.id,
+          err,
+        });
+      }
+    }
     return Response.json(
       {
         comment: { ...created, authorDisplayName: ADMIN_DISPLAY_NAME },
@@ -161,6 +181,20 @@ export async function POST(
     authorClientUserId: clientUser.id,
     body,
   });
+  try {
+    await createNotificationsForAdmins({
+      kind: "comment_created",
+      projectId,
+      postId,
+      commentId: created.id,
+      actor: { kind: "client", clientUserId: clientUser.id },
+    });
+  } catch (err) {
+    console.error("[comments] notification fan-out failed", {
+      commentId: created.id,
+      err,
+    });
+  }
   const authorDisplayName =
     clientUser.fullName?.trim() || clientUser.email;
   return Response.json(

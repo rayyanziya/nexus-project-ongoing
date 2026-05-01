@@ -36,6 +36,41 @@
       "when": 1777547862587,
       "tag": "0004_safe_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777625811147,
+      "tag": "0005_charming_hiroim",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777628111778,
+      "tag": "0006_deep_deathbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777629151571,
+      "tag": "0007_dear_kitty_pryde",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1777629967796,
+      "tag": "0008_known_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1777629993440,
+      "tag": "0009_luxuriant_brother_voodoo",
+      "breakpoints": true
     }
   ]
 }

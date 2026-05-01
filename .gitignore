@@ -1,3 +1,13 @@
 # sum AI stuffs
 .claude
 claude-memory-compiler/
+
+# confidential GDI / Nexus docs — keep out of the repo
+Nexus_Engineering_Documentation.pdf
+Nexus_Architecture_Build_Plan.pdf
+GDI_SOP_Document_Numbering_System.pdf
+GDI_SOP_Document_Numbering_System.docx
+Company Profile PT GDI 2026.pdf
+
+# local Postgres data dir — bind-mounted from docker-compose.yml
+.pgdata/

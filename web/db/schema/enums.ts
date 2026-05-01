@@ -50,3 +50,28 @@ export const commentAuthorType = pgEnum("comment_author_type", [
   "admin",
   "client",
 ]);
+
+export const notificationRecipientType = pgEnum("notification_recipient_type", [
+  "admin",
+  "client",
+]);
+
+export const notificationKind = pgEnum("notification_kind", [
+  "post_created",
+  "comment_created",
+]);
+
+export const taskStatus = pgEnum("task_status", [
+  "todo",
+  "in_progress",
+  "blocked",
+  "in_review",
+  "done",
+]);
+
+export const taskPriority = pgEnum("task_priority", [
+  "low",
+  "medium",
+  "high",
+  "urgent",
+]);

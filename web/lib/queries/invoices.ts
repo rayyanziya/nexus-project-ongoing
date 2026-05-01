@@ -89,6 +89,27 @@ export async function getInvoiceById(
   return row ?? null;
 }
 
+export async function getInvoiceForClient(input: {
+  invoiceId: string;
+  clientId: string;
+}): Promise<InvoiceWithRefs | null> {
+  const [row] = await db
+    .select(invoiceWithRefsColumns)
+    .from(invoices)
+    .innerJoin(clients, eq(invoices.clientId, clients.id))
+    .leftJoin(projects, eq(invoices.projectId, projects.id))
+    .where(
+      and(
+        eq(invoices.id, input.invoiceId),
+        eq(invoices.clientId, input.clientId),
+        isNull(invoices.deletedAt),
+        inArray(invoices.status, ["issued", "paid", "overdue"]),
+      ),
+    )
+    .limit(1);
+  return row ?? null;
+}
+
 async function loadProjectCode(
   projectId: string | null,
 ): Promise<string> {

@@ -52,9 +52,12 @@ export default async function ClientInvoicesPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                    <Link
+                      href={`/dashboard/invoices/${i.id}`}
+                      className="text-xs font-medium uppercase tracking-wide text-muted hover:text-brand hover:underline"
+                    >
                       {i.invoiceNumber}
-                    </p>
+                    </Link>
                     <p className="mt-1 text-sm text-foreground">
                       {i.description ?? "—"}
                     </p>
@@ -142,7 +145,12 @@ export default async function ClientInvoicesPage() {
                   className="border-t border-border hover:bg-brand-soft/60"
                 >
                   <td className="px-4 py-2 font-medium text-foreground">
-                    {i.invoiceNumber}
+                    <Link
+                      href={`/dashboard/invoices/${i.id}`}
+                      className="hover:underline"
+                    >
+                      {i.invoiceNumber}
+                    </Link>
                   </td>
                   <td className="px-4 py-2 text-subtle">
                     {i.projectId && i.projectName ? (

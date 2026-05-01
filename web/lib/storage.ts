@@ -41,6 +41,14 @@ export function buildProjectFileKey(input: {
   return `projects/${input.projectId}/${randomUUID()}-${safeName}`;
 }
 
+export function buildDocumentFileKey(input: {
+  documentId: string;
+  filename: string;
+}): StorageKey {
+  const safeName = input.filename.replace(/[^\w.\- ]+/g, "_").trim() || "file";
+  return `documents/${input.documentId}/${randomUUID()}-${safeName}`;
+}
+
 function resolveAbsolute(key: StorageKey): string {
   const abs = path.resolve(STORAGE_ROOT, key);
   if (!abs.startsWith(STORAGE_ROOT + path.sep) && abs !== STORAGE_ROOT) {

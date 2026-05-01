@@ -7,9 +7,11 @@ import {
   listProjectMembers,
 } from "@/lib/queries/project-members";
 import { ProjectFeed } from "@/app/_components/feed/project-feed";
+import { listAdmins, listTasksForProject } from "@/lib/queries/tasks";
 import { addMemberAction, updateProjectAction } from "../actions";
 import { DeleteProjectButton } from "./delete-button";
 import { RemoveMemberButton } from "./remove-member-button";
+import { TasksSection } from "./tasks-section";
 
 const STATUS_OPTIONS: ReadonlyArray<{ value: ProjectStatus; label: string }> = [
   { value: "planning", label: "Planning" },
@@ -61,12 +63,14 @@ export default async function AdminProjectDetailPage({
   const project = await getProjectById(id);
   if (!project) notFound();
 
-  const [members, available] = await Promise.all([
+  const [members, available, projectTasks, admins] = await Promise.all([
     listProjectMembers(id),
     listAvailableMembersForProject({
       projectId: id,
       clientId: project.clientId,
     }),
+    listTasksForProject(id),
+    listAdmins(),
   ]);
 
   const updateAction = updateProjectAction.bind(null, id);
@@ -231,6 +235,8 @@ export default async function AdminProjectDetailPage({
           </table>
         </div>
       </section>
+
+      <TasksSection projectId={id} tasks={projectTasks} admins={admins} />
 
       <ProjectFeed
         projectId={id}
