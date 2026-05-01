@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
+    "@aws-sdk/client-s3": "^3.1040.0",
     "@clerk/nextjs": "^7.2.7",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.4",
