@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { logAdminAction } from "@/lib/audit";
+import { parseDateFromForm } from "@/lib/form";
 import {
   addInvoiceLineItem,
   createInvoice,
@@ -25,13 +26,6 @@ const INVOICE_STATUSES = [
 
 function isValidStatus(value: string): value is InvoiceStatus {
   return (INVOICE_STATUSES as ReadonlyArray<string>).includes(value);
-}
-
-function parseDateInput(value: FormDataEntryValue | null): Date | null {
-  const raw = String(value ?? "").trim();
-  if (!raw) return null;
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function parseAmount(value: FormDataEntryValue | null): number | null {
@@ -91,8 +85,8 @@ export async function updateInvoiceAction(
     return;
   }
 
-  const issuedAt = parseDateInput(formData.get("issuedAt"));
-  const dueAt = parseDateInput(formData.get("dueAt"));
+  const issuedAt = parseDateFromForm(formData.get("issuedAt"));
+  const dueAt = parseDateFromForm(formData.get("dueAt"));
 
   const projectId = projectIdRaw || null;
 

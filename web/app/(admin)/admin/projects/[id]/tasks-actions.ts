@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { logAdminAction } from "@/lib/audit";
+import { nullableTrim, parseDateFromForm } from "@/lib/form";
 import {
   createTask,
   softDeleteTask,
@@ -34,18 +35,6 @@ function isPriority(v: string): v is TaskPriority {
   return (TASK_PRIORITIES as ReadonlyArray<string>).includes(v);
 }
 
-function parseDate(v: FormDataEntryValue | null): Date | null {
-  const raw = String(v ?? "").trim();
-  if (!raw) return null;
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
-function nullable(v: FormDataEntryValue | null): string | null {
-  const s = String(v ?? "").trim();
-  return s.length === 0 ? null : s;
-}
-
 export async function createTaskAction(
   projectId: string,
   formData: FormData,
@@ -64,11 +53,11 @@ export async function createTaskAction(
   const task = await createTask({
     projectId,
     title,
-    body: nullable(formData.get("body")),
+    body: nullableTrim(formData.get("body")),
     status,
     priority,
-    assigneeAdminId: nullable(formData.get("assigneeAdminId")),
-    dueAt: parseDate(formData.get("dueAt")),
+    assigneeAdminId: nullableTrim(formData.get("assigneeAdminId")),
+    dueAt: parseDateFromForm(formData.get("dueAt")),
     createdByAdminId: clerkUserId,
   });
 
@@ -97,7 +86,7 @@ export async function updateTaskAction(
   }
 
   const body = formData.get("body");
-  if (body !== null) patch.body = nullable(body);
+  if (body !== null) patch.body = nullableTrim(body);
 
   const status = formData.get("status");
   if (status !== null) {
@@ -112,10 +101,10 @@ export async function updateTaskAction(
   }
 
   const assignee = formData.get("assigneeAdminId");
-  if (assignee !== null) patch.assigneeAdminId = nullable(assignee);
+  if (assignee !== null) patch.assigneeAdminId = nullableTrim(assignee);
 
   const dueAt = formData.get("dueAt");
-  if (dueAt !== null) patch.dueAt = parseDate(dueAt);
+  if (dueAt !== null) patch.dueAt = parseDateFromForm(dueAt);
 
   const updated = await updateTask(taskId, patch);
   if (!updated) return;

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { logAdminAction } from "@/lib/audit";
+import { nullableTrim } from "@/lib/form";
 import {
   clearDocumentFile,
   createDocument,
@@ -21,11 +22,6 @@ import {
 } from "@/lib/storage";
 
 const MAX_FILE_BYTES = 500 * 1024 * 1024;
-
-function nullableTrim(v: FormDataEntryValue | null): string | null {
-  const s = String(v ?? "").trim();
-  return s.length === 0 ? null : s;
-}
 
 export async function createDocumentAction(formData: FormData): Promise<void> {
   const { clerkUserId } = await requireAdmin();

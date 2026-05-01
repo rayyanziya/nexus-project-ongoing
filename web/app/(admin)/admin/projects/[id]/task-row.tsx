@@ -5,14 +5,10 @@ import {
   TASK_PRIORITY_OPTIONS,
   TASK_STATUS_OPTIONS,
 } from "@/app/_components/tasks/task-badges";
+import { ConfirmActionButton } from "@/app/_components/confirm-action-button";
+import { toDateInputValue } from "@/lib/format";
 import type { AdminUser, Task } from "@/lib/queries/tasks";
-import { DeleteTaskButton } from "./delete-task-button";
-import { updateTaskAction } from "./tasks-actions";
-
-function toDateInputValue(d: Date | null): string {
-  if (!d) return "";
-  return d.toISOString().slice(0, 10);
-}
+import { deleteTaskAction, updateTaskAction } from "./tasks-actions";
 
 function adminLabel(admin: AdminUser): string {
   return admin.fullName?.trim() || admin.email;
@@ -128,7 +124,13 @@ export function TaskRow({
         </form>
       </td>
       <td className="px-3 py-2 text-right">
-        <DeleteTaskButton projectId={projectId} taskId={task.id} />
+        <ConfirmActionButton
+          action={deleteTaskAction.bind(null, projectId, task.id)}
+          message="Delete this task?"
+          label="Delete"
+          pendingLabel="Deleting…"
+          variant="danger-text"
+        />
       </td>
     </tr>
   );

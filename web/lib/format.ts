@@ -8,6 +8,11 @@ export function formatIdr(amount: number): string {
   return idrFormatter.format(amount);
 }
 
+export function toDateInputValue(d: Date | null): string {
+  if (!d) return "";
+  return d.toISOString().slice(0, 10);
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   const units = ["KB", "MB", "GB"];

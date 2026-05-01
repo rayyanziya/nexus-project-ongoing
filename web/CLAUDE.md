@@ -32,8 +32,12 @@ Domain-grouped, all re-exported from `db/schema/index.ts`:
 | `chat.ts`     | `project_conversations`, `project_messages`         | One conversation per (project, client_user); token + cache stats|
 | `billing.ts`  | `invoices`, `invoice_line_items`, `bank_accounts`   | IDR `bigint`; admin manually marks paid; bank fields snapshot to invoice at issue time |
 | `audit.ts`    | `audit_log`                                         | Every admin mutation should append a row                        |
+| `sequences.ts`| `document_sequences`                                | Backs `nextDocumentNumber()` — monotonic counter per `(year, doc_type, project_code)` |
+| `notifications.ts` | `notifications`                                | In-app bell + per-role list; recipient is admin XOR client (check constraint) |
+| `tasks.ts`    | `tasks`                                             | Admin-only project tasks; status/priority enums in `enums.ts`   |
+| `documents.ts`| `documents`                                         | Number allocated only on issue; voids/deletes never reuse numbers — `nextDocumentNumber()` is monotonic. Hard-delete; no `deletedAt` column |
 
-All tables: UUID PK via `gen_random_uuid()`, timestamps `created_at` / `updated_at`, soft-delete `deleted_at` where applicable. Don't redefine these elsewhere.
+All tables: UUID PK via `gen_random_uuid()`, timestamps `created_at` / `updated_at`, soft-delete `deleted_at` where applicable (exception: `documents` is hard-delete). Don't redefine these elsewhere.
 
 ## Canonical homes for shared logic
 
@@ -47,8 +51,16 @@ All tables: UUID PK via `gen_random_uuid()`, timestamps `created_at` / `updated_
 | Anthropic client + context builder    | `lib/anthropic.ts`                       |
 | Domain queries                        | `lib/queries/<domain>.ts` (one per area) |
 | Audit-log writers                     | `lib/audit.ts`                           |
+| Document numbering format + sequence  | `lib/document-numbering-format.ts` (client-safe) + `lib/document-numbering.ts` (DB-backed `nextDocumentNumber`) |
+| Display formatting (IDR, bytes, dates) | `lib/format.ts` — `formatIdr`, `formatBytes`, `toDateInputValue` |
+| Form-data parsing helpers             | `lib/form.ts` — `parseDateFromForm`, `nullableTrim` |
+| Confirm-and-call action button (any "Delete" / "Remove" with `confirm()` + transition) | `app/_components/confirm-action-button.tsx` (`variant: danger \| danger-soft \| danger-text \| pill`) |
+| Status pills with style maps          | `app/_components/status-badge.tsx` (square/pill shape; one wrapper per domain owns the style map) |
+| Markdown rendering                    | `app/_components/markdown.tsx`           |
 
 A "domain query" is any query reused across more than one server component or route handler — e.g. "list visible files for a project", "get all `for_ai_context` artifacts", "compute outstanding invoice total". If you write the same Drizzle query in two places, extract it.
+
+The same rule applies to UI: if you find yourself writing a `useTransition` + `confirm()` button or a status pill component twice, use the shared one.
 
 ## Code rules
 

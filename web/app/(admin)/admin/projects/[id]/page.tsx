@@ -7,10 +7,15 @@ import {
   listProjectMembers,
 } from "@/lib/queries/project-members";
 import { ProjectFeed } from "@/app/_components/feed/project-feed";
+import { ConfirmActionButton } from "@/app/_components/confirm-action-button";
+import { toDateInputValue } from "@/lib/format";
 import { listAdmins, listTasksForProject } from "@/lib/queries/tasks";
-import { addMemberAction, updateProjectAction } from "../actions";
-import { DeleteProjectButton } from "./delete-button";
-import { RemoveMemberButton } from "./remove-member-button";
+import {
+  addMemberAction,
+  deleteProjectAction,
+  removeMemberAction,
+  updateProjectAction,
+} from "../actions";
 import { TasksSection } from "./tasks-section";
 
 const STATUS_OPTIONS: ReadonlyArray<{ value: ProjectStatus; label: string }> = [
@@ -20,11 +25,6 @@ const STATUS_OPTIONS: ReadonlyArray<{ value: ProjectStatus; label: string }> = [
   { value: "delivered", label: "Delivered" },
   { value: "archived", label: "Archived" },
 ];
-
-function toDateInputValue(d: Date | null): string {
-  if (!d) return "";
-  return d.toISOString().slice(0, 10);
-}
 
 function DateField({
   name,
@@ -222,10 +222,12 @@ export default async function AdminProjectDetailPage({
                       {m.addedAt.toLocaleDateString()}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <RemoveMemberButton
-                        projectId={id}
-                        clientUserId={m.id}
-                        email={m.email}
+                      <ConfirmActionButton
+                        action={removeMemberAction.bind(null, id, m.id)}
+                        message={`Remove ${m.email} from this project?`}
+                        label="Remove"
+                        pendingLabel="Removing…"
+                        variant="pill"
                       />
                     </td>
                   </tr>
@@ -249,7 +251,13 @@ export default async function AdminProjectDetailPage({
           Soft-deletes the project. Files and chat history remain in storage.
         </p>
         <div className="mt-4">
-          <DeleteProjectButton projectId={id} />
+          <ConfirmActionButton
+            action={deleteProjectAction.bind(null, id)}
+            message="Delete this project? Members will lose access to its files and chat. This cannot be undone."
+            label="Delete project"
+            pendingLabel="Deleting…"
+            variant="danger"
+          />
         </div>
       </section>
     </main>

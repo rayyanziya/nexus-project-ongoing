@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { getClientById } from "@/lib/queries/clients";
 import { listClientUsersByClientId } from "@/lib/queries/client-users";
-import { updateClientNameAction } from "../actions";
-import { DeleteClientButton } from "./delete-button";
+import { ConfirmActionButton } from "@/app/_components/confirm-action-button";
+import { deleteClientAction, updateClientNameAction } from "../actions";
 import { InviteUserForm } from "./invite-form";
 
 export default async function AdminClientDetailPage({
@@ -93,7 +93,13 @@ export default async function AdminClientDetailPage({
           Soft-deletes the client. User accounts in Clerk are not removed.
         </p>
         <div className="mt-4">
-          <DeleteClientButton clientId={id} />
+          <ConfirmActionButton
+            action={deleteClientAction.bind(null, id)}
+            message="Delete this client? Their users will lose access. This cannot be undone."
+            label="Delete client"
+            pendingLabel="Deleting…"
+            variant="danger"
+          />
         </div>
       </section>
     </main>

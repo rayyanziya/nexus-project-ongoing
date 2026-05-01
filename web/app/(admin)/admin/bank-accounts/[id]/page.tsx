@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { getBankAccountById } from "@/lib/queries/bank-accounts";
-import { updateBankAccountAction } from "../actions";
+import { ConfirmActionButton } from "@/app/_components/confirm-action-button";
+import { deleteBankAccountAction, updateBankAccountAction } from "../actions";
 import { ActiveToggleButton } from "./active-toggle";
-import { DeleteBankAccountButton } from "./delete-button";
 
 export default async function AdminBankAccountDetailPage({
   params,
@@ -97,7 +97,13 @@ export default async function AdminBankAccountDetailPage({
           Soft-deletes the account. Historical invoice snapshots are preserved.
         </p>
         <div className="mt-4">
-          <DeleteBankAccountButton id={id} />
+          <ConfirmActionButton
+            action={deleteBankAccountAction.bind(null, id)}
+            message="Delete this bank account? Past invoices keep their snapshot, but you cannot pick it on new invoices."
+            label="Delete account"
+            pendingLabel="Deleting…"
+            variant="danger"
+          />
         </div>
       </section>
     </main>

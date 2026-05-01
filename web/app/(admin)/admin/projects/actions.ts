@@ -15,6 +15,7 @@ import {
   removeProjectMember,
 } from "@/lib/queries/project-members";
 import { logAdminAction } from "@/lib/audit";
+import { parseDateFromForm } from "@/lib/form";
 import {
   INTERNAL_PROJECT_CODE,
   isValidProjectCode,
@@ -66,13 +67,6 @@ export async function createProjectAction(formData: FormData) {
   redirect(`/admin/projects/${project.id}`);
 }
 
-function parseDateInput(value: FormDataEntryValue | null): Date | null {
-  const raw = String(value ?? "").trim();
-  if (!raw) return null;
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
 export async function updateProjectAction(
   projectId: string,
   formData: FormData,
@@ -83,11 +77,11 @@ export async function updateProjectAction(
   const status = String(formData.get("status") ?? "").trim();
   if (!name || !isValidStatus(status)) return;
 
-  const startedAt = parseDateInput(formData.get("startedAt"));
-  const expectedDeliveryAt = parseDateInput(
+  const startedAt = parseDateFromForm(formData.get("startedAt"));
+  const expectedDeliveryAt = parseDateFromForm(
     formData.get("expectedDeliveryAt"),
   );
-  let deliveredAt = parseDateInput(formData.get("deliveredAt"));
+  let deliveredAt = parseDateFromForm(formData.get("deliveredAt"));
   if (status === "delivered" && !deliveredAt) deliveredAt = new Date();
   if (status !== "delivered") deliveredAt = null;
 

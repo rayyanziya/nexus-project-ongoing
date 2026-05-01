@@ -8,16 +8,17 @@ import {
   type InvoiceStatus,
 } from "@/lib/queries/invoices";
 import { listAllBankAccounts } from "@/lib/queries/bank-accounts";
-import { formatIdr } from "@/lib/format";
+import { formatIdr, toDateInputValue } from "@/lib/format";
+import { ConfirmActionButton } from "@/app/_components/confirm-action-button";
 import {
   addInvoiceLineItemAction,
+  deleteInvoiceAction,
   markInvoiceIssuedAction,
+  removeInvoiceLineItemAction,
   updateInvoiceAction,
 } from "../actions";
 import { InvoiceStatusBadge } from "../status-badge";
-import { DeleteInvoiceButton } from "./delete-button";
 import { MarkPaidForm } from "./mark-paid-form";
-import { RemoveLineItemButton } from "./remove-line-item-button";
 import { StatusActionButton } from "./status-action-button";
 
 const STATUS_OPTIONS: ReadonlyArray<{ value: InvoiceStatus; label: string }> = [
@@ -27,11 +28,6 @@ const STATUS_OPTIONS: ReadonlyArray<{ value: InvoiceStatus; label: string }> = [
   { value: "overdue", label: "Overdue" },
   { value: "void", label: "Void" },
 ];
-
-function toDateInputValue(d: Date | null): string {
-  if (!d) return "";
-  return d.toISOString().slice(0, 10);
-}
 
 export default async function AdminInvoiceDetailPage({
   params,
@@ -326,9 +322,16 @@ export default async function AdminInvoiceDetailPage({
                       {formatIdr(li.totalIdr)}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <RemoveLineItemButton
-                        invoiceId={id}
-                        lineItemId={li.id}
+                      <ConfirmActionButton
+                        action={removeInvoiceLineItemAction.bind(
+                          null,
+                          id,
+                          li.id,
+                        )}
+                        message="Remove this line item?"
+                        label="Remove"
+                        pendingLabel="Removing…"
+                        variant="pill"
                       />
                     </td>
                   </tr>
@@ -432,7 +435,13 @@ export default async function AdminInvoiceDetailPage({
           Soft-deletes the invoice. Audit log retains the record.
         </p>
         <div className="mt-4">
-          <DeleteInvoiceButton invoiceId={id} />
+          <ConfirmActionButton
+            action={deleteInvoiceAction.bind(null, id)}
+            message="Delete this invoice? Audit log keeps the record. This cannot be undone."
+            label="Delete invoice"
+            pendingLabel="Deleting…"
+            variant="danger"
+          />
         </div>
       </section>
     </main>

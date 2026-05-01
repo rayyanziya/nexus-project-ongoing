@@ -5,10 +5,10 @@ import { listProjects } from "@/lib/queries/projects";
 import { getDocumentById } from "@/lib/queries/documents";
 import { DOCUMENT_TYPES } from "@/lib/document-numbering";
 import { formatBytes } from "@/lib/format";
+import { ConfirmActionButton } from "@/app/_components/confirm-action-button";
 import { DocumentFileSection } from "./file-section";
-import { updateDocumentAction } from "../actions";
+import { deleteDocumentAction, updateDocumentAction } from "../actions";
 import { IssueDocumentButton } from "./issue-button";
-import { DeleteDocumentButton } from "./delete-button";
 
 export default async function AdminDocumentDetailPage({
   params,
@@ -173,7 +173,14 @@ export default async function AdminDocumentDetailPage({
         </dl>
         <div className="mt-5 flex flex-wrap items-center gap-3">
           {isDraft && <IssueDocumentButton documentId={id} />}
-          <DeleteDocumentButton documentId={id} />
+          <ConfirmActionButton
+            action={deleteDocumentAction.bind(null, id)}
+            message="Delete this document permanently? The number is retired and cannot be reused."
+            label="Delete document"
+            pendingLabel="Deleting…"
+            variant="danger-soft"
+            redirectTo="/admin/documents"
+          />
         </div>
       </section>
     </main>
